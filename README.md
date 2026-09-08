@@ -27,9 +27,34 @@ streamlit run app.py
 | 2. 1그룹 vs 2그룹 비교 | 그룹별 매출/매출이익 비교, 자동 계산 콜아웃, 광고주별 목표/실적 테이블 |
 | 3. 그룹별 MM 생산성 *(파일럿)* | 클라이언트/브랜드별 MM 투입·매출·수익·MM당생산성, 담당자별 MM, 데이터 품질 노트 |
 | 4. 담당자 프로젝트 현황 | 담당자 × 클라이언트 역할(PM/S.AE/AE) 매트릭스, 비고 |
+| 5. AI 챗봇 *(파일럿, 비밀번호 보호)* | Claude API 기반 업무 도우미. 현재 노션만 연동, 슬랙/구글드라이브/그룹메일은 순차 연동 예정 |
 
 > ⚠️ **3번 페이지(MM 생산성)는 파일럿 버전**입니다. 원본 스프레드시트의 MM 생산성 수식이 아직
 > 검증되지 않았습니다. 사용자 확인 후 업데이트될 예정입니다.
+
+## AI 챗봇 설정 (5번 페이지)
+
+이 대시보드는 **Public**(공개) 저장소/앱입니다. 챗봇은 내부 자료(현재 노션, 추후 슬랙·구글드라이브·
+그룹메일)에 접근하므로 별도 비밀번호로 잠겨 있고, 아래 시크릿이 없으면 자동으로 비활성화됩니다
+(앱 전체가 죽지 않습니다).
+
+**Streamlit Community Cloud → 앱 관리(Manage app) → Settings → Secrets** 에 아래 형식으로 입력:
+
+```toml
+CHATBOT_PASSWORD = "원하는 비밀번호"
+ANTHROPIC_API_KEY = "sk-ant-..."   # console.anthropic.com → API Keys
+NOTION_TOKEN = "ntn_..."            # notion.so/my-integrations → 새 통합 생성 후 토큰 복사
+                                     # + 검토 대상 노션 페이지에서 "..." → Connections → 해당 통합 추가
+```
+
+`NOTION_TOKEN`이 없으면 챗봇은 일반 대화만 가능하고(노션 검색 없이), `CHATBOT_PASSWORD` 또는
+`ANTHROPIC_API_KEY`가 없으면 페이지 전체가 "설정 필요" 안내만 표시합니다.
+
+로컬에서 테스트하려면 `.streamlit/secrets.toml.example`을 `.streamlit/secrets.toml`로 복사해
+값을 채우세요(이 파일은 `.gitignore`에 포함되어 있어 git에 올라가지 않습니다).
+
+**연동 로드맵**: 노션(완료) → 슬랙 → 구글드라이브 → 그룹메일 순서로 단계적으로 확장 예정입니다.
+각 단계는 동일한 패턴(검색 → 텍스트 추출 → `src/chatbot.py`의 컨텍스트에 추가)을 따릅니다.
 
 ## 데이터 원본 (구글 시트, 5개)
 

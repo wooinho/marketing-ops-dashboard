@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 .claude/
 config/service_account.json
+.streamlit/secrets.toml
