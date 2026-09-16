@@ -34,7 +34,7 @@ streamlit run app.py
 
 ## AI 챗봇 설정 (5번 페이지)
 
-이 대시보드는 **Public**(공개) 저장소/앱입니다. 챗봇은 내부 자료(현재 노션, 추후 슬랙·구글드라이브·
+이 대시보드는 **Public**(공개) 저장소/앱입니다. 챗봇은 내부 자료(노션·슬랙, 추후 구글드라이브·
 그룹메일)에 접근하므로 별도 비밀번호로 잠겨 있고, 아래 시크릿이 없으면 자동으로 비활성화됩니다
 (앱 전체가 죽지 않습니다).
 
@@ -45,15 +45,30 @@ CHATBOT_PASSWORD = "원하는 비밀번호"
 ANTHROPIC_API_KEY = "sk-ant-..."   # console.anthropic.com → API Keys
 NOTION_TOKEN = "ntn_..."            # notion.so/my-integrations → 새 통합 생성 후 토큰 복사
                                      # + 검토 대상 노션 페이지에서 "..." → Connections → 해당 통합 추가
+SLACK_BOT_TOKEN = "xoxb-..."        # 아래 "슬랙 봇 만들기" 참고
 ```
 
-`NOTION_TOKEN`이 없으면 챗봇은 일반 대화만 가능하고(노션 검색 없이), `CHATBOT_PASSWORD` 또는
-`ANTHROPIC_API_KEY`가 없으면 페이지 전체가 "설정 필요" 안내만 표시합니다.
+`NOTION_TOKEN`/`SLACK_BOT_TOKEN`이 없으면 해당 소스 없이 일반 대화만 가능하고, `CHATBOT_PASSWORD`
+또는 `ANTHROPIC_API_KEY`가 없으면 페이지 전체가 "설정 필요" 안내만 표시합니다.
 
 로컬에서 테스트하려면 `.streamlit/secrets.toml.example`을 `.streamlit/secrets.toml`로 복사해
 값을 채우세요(이 파일은 `.gitignore`에 포함되어 있어 git에 올라가지 않습니다).
 
-**연동 로드맵**: 노션(완료) → 슬랙 → 구글드라이브 → 그룹메일 순서로 단계적으로 확장 예정입니다.
+### 슬랙 봇 만들기 (SLACK_BOT_TOKEN)
+
+1. https://api.slack.com/apps → **Create New App → From scratch** → 이름/워크스페이스 선택
+2. 왼쪽 메뉴 **OAuth & Permissions** → **Scopes → Bot Token Scopes**에 추가:
+   `channels:history`, `channels:read` (비공개 채널도 검색하려면 `groups:history`, `groups:read`도 추가)
+3. 같은 페이지 상단 **Install to Workspace** 클릭 → 워크스페이스 관리자 승인
+4. 설치 후 나오는 **Bot User OAuth Token** (`xoxb-`로 시작) 복사 → `SLACK_BOT_TOKEN`에 입력
+5. **검색되길 원하는 채널마다** 슬랙에서 `/invite @앱이름` 명령으로 봇을 직접 초대해야 합니다
+   (노션과 동일하게 "명시적으로 공유한 곳만 검색"하는 방식입니다)
+
+> ⚠️ 슬랙은 **워크스페이스 전체 검색이 아닙니다.** 봇 토큰은 `search.messages`(전체 검색 API,
+> 사용자 토큰 전용)를 쓸 수 없어, 이 파일럿은 **봇이 초대된 채널의 최근 대화(채널당 최대 100건)
+> 중 질문 키워드가 포함된 메시지**만 찾아옵니다. 오래된 대화나 초대 안 된 채널은 검색되지 않습니다.
+
+**연동 로드맵**: 노션 → 슬랙(완료) → 구글드라이브 → 그룹메일 순서로 단계적으로 확장 예정입니다.
 각 단계는 동일한 패턴(검색 → 텍스트 추출 → `src/chatbot.py`의 컨텍스트에 추가)을 따릅니다.
 
 ## 데이터 원본 (구글 시트, 5개)

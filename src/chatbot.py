@@ -2,15 +2,18 @@
 """
 대시보드 내장 AI 챗봇 엔진 (파일럿).
 
-Claude API(Anthropic)로 답변을 생성하며, NOTION_TOKEN이 설정된 경우 질문과
-관련된 노션 페이지를 검색해 컨텍스트로 함께 넘긴다. 슬랙/구글드라이브/그룹메일은
-아직 미연동 — 추후 동일한 패턴(검색 → 텍스트 추출 → 컨텍스트 주입)으로 확장 예정.
+Claude API(Anthropic)로 답변을 생성하며, 아래 시크릿이 설정된 경우 각 소스에서
+질문과 관련된 내용을 검색해 컨텍스트로 함께 넘긴다:
+  - NOTION_TOKEN: 통합(integration)에 공유된 노션 페이지 검색
+  - SLACK_BOT_TOKEN: 봇이 초대된 채널의 최근 대화 중 키워드 매칭
+구글드라이브/그룹메일은 아직 미연동 — 추후 동일한 패턴으로 확장 예정.
 """
 from __future__ import annotations
 
 import anthropic
 
 from . import notion_client_lite as notion
+from . import slack_client_lite as slack
 
 CHAT_MODEL = "claude-sonnet-5"
 
@@ -18,42 +21,63 @@ SYSTEM_PROMPT = """당신은 와일리 마케팅캠페인본부(마케팅그룹 
 아래 "참고 자료" 섹션에 제공된 내용만 근거로 답변하세요. 참고 자료에 없는 내용은
 추측하지 말고 "연동된 자료에서 찾지 못했습니다"라고 명확히 답하세요.
 답변은 한국어로, 간결하고 업무에 바로 쓸 수 있는 톤으로 작성하세요.
-현재는 노션(Notion)만 연동되어 있고 슬랙/구글드라이브/그룹메일은 아직 연동 전입니다 —
-해당 출처에 대한 질문을 받으면 아직 연동되지 않았다고 안내하세요."""
+연동되지 않은 출처(구글드라이브/그룹메일 등)에 대한 질문을 받으면 아직 연동되지
+않았다고 안내하세요. 슬랙 자료는 "봇이 초대된 채널의 최근 대화"만 포함하므로,
+전체 워크스페이스를 다 검색한 것은 아니라는 점을 필요시 언급하세요."""
 
 
 class ChatbotError(RuntimeError):
     pass
 
 
-def _build_context(notion_token: str | None, user_query: str) -> tuple[str, list[dict]]:
-    """가능한 데이터 소스에서 컨텍스트를 모아 (context_text, sources) 반환."""
+def _notion_context(notion_token: str | None, user_query: str) -> tuple[str, list[dict]]:
     if not notion_token:
-        return "(연동된 자료 없음 — 일반 지식으로만 답변)", []
-
+        return "", []
     try:
         pages = notion.search_and_extract(notion_token, user_query, max_pages=3)
     except notion.NotionError as exc:
-        return f"(노션 검색 실패: {exc})", []
-
+        return f"### Notion\n(노션 검색 실패: {exc})", []
     if not pages:
-        return "(노션에서 관련 페이지를 찾지 못했습니다)", []
-
-    blocks = []
-    for p in pages:
-        blocks.append(f"### {p['title']} ({p['url']})\n{p['text']}")
-    return "\n\n".join(blocks), pages
+        return "### Notion\n(관련 페이지를 찾지 못했습니다)", []
+    blocks = [f"#### {p['title']} ({p['url']})\n{p['text']}" for p in pages]
+    return "### Notion\n" + "\n\n".join(blocks), pages
 
 
-def ask(api_key: str, notion_token: str | None, history: list[dict], user_query: str) -> dict:
+def _slack_context(slack_token: str | None, user_query: str) -> tuple[str, list[dict]]:
+    if not slack_token:
+        return "", []
+    try:
+        matches = slack.search_and_extract(slack_token, user_query)
+    except slack.SlackError as exc:
+        return f"### Slack\n(슬랙 검색 실패: {exc})", []
+    if not matches:
+        return "### Slack\n(봇이 초대된 채널의 최근 대화 중 관련 내용을 찾지 못했습니다)", []
+    lines = [f"- [#{m['channel']}] {m['text']}" for m in matches]
+    return "### Slack (봇이 초대된 채널의 최근 대화 기준)\n" + "\n".join(lines), matches
+
+
+def _build_context(notion_token: str | None, slack_token: str | None,
+                    user_query: str) -> tuple[str, list[dict], list[dict]]:
+    """가능한 데이터 소스에서 컨텍스트를 모아 (context_text, notion_sources, slack_sources) 반환."""
+    notion_text, notion_sources = _notion_context(notion_token, user_query)
+    slack_text, slack_sources = _slack_context(slack_token, user_query)
+
+    parts = [t for t in (notion_text, slack_text) if t]
+    if not parts:
+        return "(연동된 자료 없음 — 일반 지식으로만 답변)", [], []
+    return "\n\n".join(parts), notion_sources, slack_sources
+
+
+def ask(api_key: str, notion_token: str | None, slack_token: str | None,
+        history: list[dict], user_query: str) -> dict:
     """
     history: [{"role": "user"|"assistant", "content": str}, ...] (이번 질문 제외 이전 대화)
-    반환: {"answer": str, "sources": [{"title","url"}]}
+    반환: {"answer": str, "notion_sources": [...], "slack_sources": [...]}
     """
     if not api_key:
         raise ChatbotError("ANTHROPIC_API_KEY 시크릿이 설정되지 않았습니다.")
 
-    context_text, sources = _build_context(notion_token, user_query)
+    context_text, notion_sources, slack_sources = _build_context(notion_token, slack_token, user_query)
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -77,4 +101,8 @@ def ask(api_key: str, notion_token: str | None, history: list[dict], user_query:
     except anthropic.APIConnectionError as exc:
         raise ChatbotError(f"Claude API 연결 실패: {exc}") from exc
 
-    return {"answer": answer, "sources": [{"title": p["title"], "url": p["url"]} for p in sources]}
+    return {
+        "answer": answer,
+        "notion_sources": [{"title": p["title"], "url": p["url"]} for p in notion_sources],
+        "slack_sources": [{"channel": m["channel"], "text": m["text"]} for m in slack_sources],
+    }
