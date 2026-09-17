@@ -83,6 +83,7 @@ st.info(
 
 st.divider()
 st.subheader("광고주별 상세 (연간 목표 대비 실적)")
+st.caption("연간 목표는 월별로 나뉘어 있지 않아 이 표는 연간 누적 기준입니다. 선택월 기준 실적은 아래 '광고주별 월별 실적'을 참고하세요.")
 tab1, tab2 = st.tabs(["1그룹", "2그룹"])
 for tab, grp in [(tab1, "1그룹"), (tab2, "2그룹")]:
     with tab:
@@ -104,3 +105,27 @@ for tab, grp in [(tab1, "1그룹"), (tab2, "2그룹")]:
                                              f"{grp} 광고주별 목표 vs 실적 매출"),
             use_container_width=True,
         )
+
+st.divider()
+st.subheader(f"광고주별 월별 실적 ({month}월 기준)")
+st.caption("사이드바에서 선택한 월 기준, 광고주별 매출/매입/수익 실적입니다(연간 목표 대비가 아닌 해당월 실적치).")
+tab3, tab4 = st.tabs(["1그룹", "2그룹"])
+for tab, grp in [(tab3, "1그룹"), (tab4, "2그룹")]:
+    with tab:
+        mdf = client_monthly[(client_monthly["grp"] == grp) & (client_monthly["month"] == month)].copy()
+        if mdf.empty:
+            st.info(f"{grp}은 {month}월 광고주별 실적 데이터가 없습니다.")
+            continue
+        mdf = mdf.sort_values("revenue", ascending=False)
+        mshow = mdf[["client", "revenue", "cost", "profit"]].copy()
+        mshow.columns = ["광고주", "매출", "매입", "수익"]
+        for c in ["매출", "매입", "수익"]:
+            mshow[c] = mshow[c].apply(lambda v: metrics.format_currency(v) if pd.notna(v) else "N/A")
+        st.dataframe(mshow, use_container_width=True, hide_index=True)
+        chart_df = mdf.dropna(subset=["revenue"])
+        if not chart_df.empty:
+            st.plotly_chart(
+                charts.group_comparison_bar(chart_df, "client", "revenue", f"{grp} {month}월 광고주별 매출",
+                                             x_title="광고주"),
+                use_container_width=True,
+            )

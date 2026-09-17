@@ -20,8 +20,9 @@ BASE_LAYOUT = dict(
     font=dict(family="Malgun Gothic, Apple SD Gothic Neo, sans-serif", size=13, color=GRAY_DARK),
     plot_bgcolor="white",
     paper_bgcolor="white",
-    margin=dict(l=40, r=20, t=50, b=40),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02),
+    margin=dict(l=40, r=20, t=55, b=70),
+    # 범례를 플롯 하단(x축 제목 아래)에 배치 — 상단에 두면 제목과 겹치는 버그가 있었음
+    legend=dict(orientation="h", yanchor="top", y=-0.22, xanchor="center", x=0.5),
 )
 
 
@@ -40,9 +41,9 @@ def target_vs_actual_trend(df: pd.DataFrame, month_col: str, target_col: str, ac
 
 
 def group_comparison_bar(df: pd.DataFrame, group_col: str, value_col: str, title: str,
-                          y_title: str = "금액(₩)") -> go.Figure:
+                          y_title: str = "금액(₩)", x_title: str = "그룹") -> go.Figure:
     fig = px.bar(df, x=group_col, y=value_col, color=group_col, color_discrete_map=GROUP_COLORS, text_auto=".2s")
-    fig.update_layout(**BASE_LAYOUT, title=title, xaxis_title="그룹", yaxis_title=y_title, showlegend=False)
+    fig.update_layout(**BASE_LAYOUT, title=title, xaxis_title=x_title, yaxis_title=y_title, showlegend=False)
     return fig
 
 
