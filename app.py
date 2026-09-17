@@ -7,6 +7,8 @@
 
 데이터는 5개 구글 시트에서 수기 추출한 CSV(data/raw/)를 DuckDB(data/dashboard.duckdb)에
 적재해 사용한다. 실시간 API 연동은 없으며, 새로고침은 README의 절차를 따라야 한다.
+
+데이터 최종 갱신: 2026-09-17 (월별실적 최신화)
 """
 from __future__ import annotations
 
