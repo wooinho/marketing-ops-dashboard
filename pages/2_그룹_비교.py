@@ -10,8 +10,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src import app_state, charts, metrics
 
-st.set_page_config(page_title="1그룹 vs 2그룹 비교 - 마케팅그룹 운영 대시보드", page_icon="📊", layout="wide")
-st.title("1그룹 vs 2그룹 비교")
+st.title("그룹별 KPI")
 st.caption("캠페인1그룹과 캠페인2그룹의 매출/매출이익 실적을 비교합니다.")
 
 month = app_state.render_month_selector(default=app_state.DEFAULT_MONTH, max_month=11)

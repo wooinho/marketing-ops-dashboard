@@ -10,7 +10,6 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src import app_state, charts
 
-st.set_page_config(page_title="담당자 프로젝트 현황 - 마케팅그룹 운영 대시보드", page_icon="📊", layout="wide")
 st.title("그룹별 담당자 프로젝트 현황")
 st.caption("담당자 × 클라이언트별 역할(PM / S.AE / AE) 매트릭스입니다.")
 

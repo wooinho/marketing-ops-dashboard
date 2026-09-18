@@ -10,8 +10,6 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src import app_state, charts, metrics
 
-st.set_page_config(page_title="그룹별 MM 생산성(파일럿) - 마케팅그룹 운영 대시보드", page_icon="📊", layout="wide")
-
 st.warning(
     "⚠️ **파일럿(Pilot) 버전** — 원본 스프레드시트의 MM 생산성 수식이 아직 검증되지 않았습니다. "
     "사용자 확인 후 업데이트될 예정입니다."

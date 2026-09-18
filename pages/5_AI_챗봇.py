@@ -17,8 +17,6 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src import chatbot
 
-st.set_page_config(page_title="AI 챗봇(파일럿) - 마케팅그룹 운영 대시보드", page_icon="🤖", layout="wide")
-
 st.title("🤖 AI 챗봇 (파일럿)")
 st.caption("광고주/프로젝트 관련 최근 논의·결정사항 요약, 문서 검색, 업무 현황 리마인드를 도와드립니다.")
 
