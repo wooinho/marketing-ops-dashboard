@@ -92,14 +92,17 @@ def render_home() -> None:
                    delta=metrics.format_percent(metrics.achievement_rate(m_prof_actual, m_prof_target)) if m_prof_actual is not None else None)
 
         st.divider()
-        st.subheader("YTD 현황 (연간 목표 대비)")
+        st.subheader(f"누적 현황 (1월~{month}월, 연간 목표 대비)")
+        cum_rev_actual = metrics.cumulative_sum(total_monthly, "month", "revenue_actual", month)
+        cum_prof_actual = metrics.cumulative_sum(total_monthly, "month", "profit_actual", month)
         y1, y2, y3, y4 = st.columns(4)
         y1.metric("연간 목표매출", metrics.format_currency(total_annual["revenue_target"]))
-        y2.metric("YTD 발생매출", metrics.format_currency(total_annual["revenue_actual"]),
-                   delta=metrics.format_percent(total_annual["revenue_rate_pct"]))
+        y2.metric(f"1~{month}월 누적발생매출", metrics.format_currency(cum_rev_actual),
+                   delta=metrics.format_percent(metrics.achievement_rate(cum_rev_actual, total_annual["revenue_target"])))
         y3.metric("연간 목표매출이익", metrics.format_currency(total_annual["profit_target"]))
-        y4.metric("YTD 발생매출이익", metrics.format_currency(total_annual["profit_actual"]),
-                   delta=metrics.format_percent(total_annual["profit_rate_pct"]))
+        y4.metric(f"1~{month}월 누적발생매출이익", metrics.format_currency(cum_prof_actual),
+                   delta=metrics.format_percent(metrics.achievement_rate(cum_prof_actual, total_annual["profit_target"])))
+        st.caption("목표는 연간 고정값이며, 실적은 선택한 조회월까지 1월부터 누적한 값입니다(조회월을 바꾸면 함께 바뀝니다).")
 
         st.divider()
         st.subheader("월별 추이 (1월 → 선택월)")

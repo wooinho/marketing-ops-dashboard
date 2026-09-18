@@ -32,6 +32,14 @@ def productivity_per_mm(profit, mm) -> float:
     return safe_divide(profit, mm, 1.0)
 
 
+def cumulative_sum(df: pd.DataFrame, month_col: str, value_col: str, up_to_month: int) -> float:
+    """1월부터 up_to_month까지의 누적합. 결측치(아직 실적 없는 월)는 0으로 간주해 더한다."""
+    sub = df[df[month_col] <= up_to_month]
+    if sub.empty:
+        return 0.0
+    return float(sub[value_col].sum(skipna=True))
+
+
 def format_currency(value) -> str:
     if value is None or (isinstance(value, float) and (np.isnan(value) or np.isinf(value))):
         return "N/A"
