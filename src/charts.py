@@ -36,7 +36,10 @@ def target_vs_actual_trend(df: pd.DataFrame, month_col: str, target_col: str, ac
     fig.add_trace(go.Bar(x=d[month_col], y=d[actual_col], name="실적", marker_color=NAVY, opacity=0.85))
     fig.add_trace(go.Scatter(x=d[month_col], y=d[target_col], name="목표", mode="lines+markers",
                               marker_color="#C0392B", line=dict(dash="dot")))
-    fig.update_layout(**BASE_LAYOUT, title=title, xaxis_title="월", yaxis_title="금액(₩)")
+    fig.update_layout(**BASE_LAYOUT, title=title, yaxis_title="금액(₩)")
+    # x축에 1~12월을 전부 "N월" 텍스트로 표시(기본값은 Plotly가 2,4,6...만 골라 보여줌)
+    fig.update_xaxes(title_text="월", tickmode="array", tickvals=list(range(1, 13)),
+                      ticktext=MONTH_LABELS)
     return fig
 
 
