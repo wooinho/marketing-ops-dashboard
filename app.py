@@ -134,7 +134,6 @@ def render_home() -> None:
         1. **그룹별 KPI** — 그룹별 매출/매출이익 비교, 광고주별 상세 테이블
         2. **그룹별 MM 생산성** *(파일럿 — 수식 미검증)* — 클라이언트/담당자별 MM 투입 및 생산성
         3. **그룹별 담당자 프로젝트 현황** — 담당자 × 클라이언트 역할(PM/S.AE/AE) 매트릭스
-        4. **AI 챗봇** *(파일럿 — 비밀번호 보호 없음, 노션·슬랙·구글드라이브·그룹메일 연동)* — 논의·결정사항 요약, 문서 검색, 업무 리마인드
         """
     )
 
@@ -165,7 +164,9 @@ pg = st.navigation(
         st.Page("pages/3_MM_생산성.py", title="그룹별 MM 생산성", icon="📊", url_path="MM_생산성"),
         st.Page("pages/4_담당자_프로젝트_현황.py", title="담당자 프로젝트 현황", icon="📊",
                 url_path="담당자_프로젝트_현황"),
-        st.Page("pages/5_AI_챗봇.py", title="AI 챗봇", icon="🤖", url_path="AI_챗봇"),
+        # AI 챗봇 페이지는 사용자 요청으로 임시 숨김 처리(2026-09-22) — 코드/시크릿 로직은
+        # pages/5_AI_챗봇.py, src/chatbot.py 등에 그대로 남아있고, 아래 한 줄만 다시 추가하면
+        # 즉시 복원된다: st.Page("pages/5_AI_챗봇.py", title="AI 챗봇", icon="🤖", url_path="AI_챗봇"),
     ]
 )
 pg.run()
