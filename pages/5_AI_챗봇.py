@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-AI 챗봇 (파일럿) — 노션·슬랙 연동 업무 도우미.
+AI 챗봇 (파일럿) — 노션·슬랙·구글드라이브 연동 업무 도우미.
 
 ⚠️ 비밀번호 보호 없이 Public 대시보드에 그대로 노출된다(사용자 명시적 요청으로 제거,
-2026-09-21). 시크릿(ANTHROPIC_API_KEY, NOTION_TOKEN, SLACK_BOT_TOKEN)이 설정되지
-않으면 기능이 비활성화된 안내만 표시하고, 절대 앱 전체를 죽이지 않는다.
+2026-09-21). 시크릿(ANTHROPIC_API_KEY, NOTION_TOKEN, SLACK_BOT_TOKEN,
+[google_service_account])이 설정되지 않으면 기능이 비활성화된 안내만 표시하고,
+절대 앱 전체를 죽이지 않는다.
 """
 from __future__ import annotations
 
@@ -27,15 +28,29 @@ def _get_secret(key: str) -> str | None:
         return None
 
 
+def _get_secret_table(key: str) -> dict | None:
+    """[key] 형태의 TOML 테이블 시크릿을 일반 dict로 변환해 반환(없으면 None)."""
+    val = _get_secret(key)
+    if not val:
+        return None
+    try:
+        return dict(val)
+    except Exception:
+        return None
+
+
 ANTHROPIC_API_KEY = _get_secret("ANTHROPIC_API_KEY")
 NOTION_TOKEN = _get_secret("NOTION_TOKEN")
 SLACK_BOT_TOKEN = _get_secret("SLACK_BOT_TOKEN")
+GOOGLE_SERVICE_ACCOUNT = _get_secret_table("google_service_account")
 
 CONNECTED = []
 if NOTION_TOKEN:
     CONNECTED.append("Notion")
 if SLACK_BOT_TOKEN:
     CONNECTED.append("Slack")
+if GOOGLE_SERVICE_ACCOUNT:
+    CONNECTED.append("Google Drive")
 NOT_YET = [s for s in ["Slack", "Google Drive", "그룹메일"] if s not in CONNECTED]
 
 st.info(
@@ -69,6 +84,7 @@ with col_b:
 def _render_sources(sources: dict) -> None:
     notion_sources = sources.get("notion") or []
     slack_sources = sources.get("slack") or []
+    drive_sources = sources.get("drive") or []
     if notion_sources:
         with st.expander("📄 참고한 노션 페이지"):
             for s in notion_sources:
@@ -77,6 +93,10 @@ def _render_sources(sources: dict) -> None:
         with st.expander("💬 참고한 슬랙 대화"):
             for s in slack_sources:
                 st.markdown(f"- **#{s['channel']}**: {s['text']}")
+    if drive_sources:
+        with st.expander("📁 참고한 구글드라이브 파일"):
+            for s in drive_sources:
+                st.markdown(f"- [{s['title']}]({s['url']})")
 
 
 for i, msg in enumerate(st.session_state.chat_messages):
@@ -100,9 +120,11 @@ if user_query:
     with st.chat_message("assistant"):
         with st.spinner("자료를 찾아 답변을 준비하는 중..."):
             try:
-                result = chatbot.ask(ANTHROPIC_API_KEY, NOTION_TOKEN, SLACK_BOT_TOKEN, history, user_query)
+                result = chatbot.ask(ANTHROPIC_API_KEY, NOTION_TOKEN, SLACK_BOT_TOKEN,
+                                      GOOGLE_SERVICE_ACCOUNT, history, user_query)
                 st.markdown(result["answer"])
-                sources = {"notion": result["notion_sources"], "slack": result["slack_sources"]}
+                sources = {"notion": result["notion_sources"], "slack": result["slack_sources"],
+                           "drive": result["drive_sources"]}
                 _render_sources(sources)
                 st.session_state.chat_messages.append(
                     {"role": "assistant", "content": result["answer"]}
@@ -118,5 +140,6 @@ st.divider()
 st.caption(
     "⚠️ 파일럿 — 노션은 통합(integration)에 공유된 페이지만, 슬랙은 봇이 초대된 채널의 "
     "최근 대화 중 키워드가 일치하는 내용만 검색됩니다(워크스페이스 전체 검색이 아님). "
-    "구글드라이브/그룹메일은 순차적으로 연동 예정입니다. 답변은 참고용이며 중요 의사결정은 원문을 직접 확인하세요."
+    "구글드라이브는 서비스 계정에 공유된 파일만 검색됩니다. 그룹메일은 순차적으로 연동 예정입니다. "
+    "답변은 참고용이며 중요 의사결정은 원문을 직접 확인하세요."
 )
