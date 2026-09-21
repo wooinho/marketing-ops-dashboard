@@ -105,7 +105,7 @@ def render_home() -> None:
         st.caption("목표는 연간 고정값이며, 실적은 선택한 조회월까지 1월부터 누적한 값입니다(조회월을 바꾸면 함께 바뀝니다).")
 
         st.divider()
-        st.subheader("월별 추이 (1월 → 선택월)")
+        st.subheader("월별 추이")
         tab1, tab2 = st.tabs(["매출", "매출이익"])
         with tab1:
             st.plotly_chart(
