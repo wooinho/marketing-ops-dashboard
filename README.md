@@ -26,7 +26,7 @@ streamlit run app.py
 | 1. 1그룹 vs 2그룹 비교 | 그룹별 매출/매출이익 비교, 자동 계산 콜아웃, 광고주별 목표/실적 테이블 |
 | 2. 그룹별 MM 생산성 *(파일럿)* | 클라이언트/브랜드별 MM 투입·매출·수익·MM당생산성, 담당자별 MM, 데이터 품질 노트 |
 | 3. 담당자 프로젝트 현황 | 담당자 × 클라이언트 역할(PM/S.AE/AE) 매트릭스, 비고 |
-| 4. AI 챗봇 *(파일럿, 비밀번호 보호)* | Claude API 기반 업무 도우미. 현재 노션·슬랙 연동, 구글드라이브/그룹메일은 순차 연동 예정 |
+| 4. AI 챗봇 *(파일럿, 비밀번호 보호 없음)* | Claude API 기반 업무 도우미. 현재 노션·슬랙 연동, 구글드라이브/그룹메일은 순차 연동 예정 |
 
 > 홈 화면(`app.py`)이 과거 "본부 전체 KPI" 별도 페이지를 흡수했습니다. 사이드바에는 홈(app) 아래로
 > 1~4번 페이지만 표시됩니다.
@@ -37,21 +37,21 @@ streamlit run app.py
 ## AI 챗봇 설정 (4번 페이지)
 
 이 대시보드는 **Public**(공개) 저장소/앱입니다. 챗봇은 내부 자료(노션·슬랙, 추후 구글드라이브·
-그룹메일)에 접근하므로 별도 비밀번호로 잠겨 있고, 아래 시크릿이 없으면 자동으로 비활성화됩니다
-(앱 전체가 죽지 않습니다).
+그룹메일)에 접근하지만, **비밀번호 보호는 사용자 요청으로 2026-09-21 제거되었습니다** —
+URL을 아는 누구나 챗봇을 통해 연동된 내부 자료를 조회할 수 있는 상태입니다. 아래 시크릿이
+없으면 자동으로 비활성화됩니다(앱 전체가 죽지 않습니다).
 
 **Streamlit Community Cloud → 앱 관리(Manage app) → Settings → Secrets** 에 아래 형식으로 입력:
 
 ```toml
-CHATBOT_PASSWORD = "원하는 비밀번호"
 ANTHROPIC_API_KEY = "sk-ant-..."   # console.anthropic.com → API Keys
 NOTION_TOKEN = "ntn_..."            # notion.so/my-integrations → 새 통합 생성 후 토큰 복사
                                      # + 검토 대상 노션 페이지에서 "..." → Connections → 해당 통합 추가
 SLACK_BOT_TOKEN = "xoxb-..."        # 아래 "슬랙 봇 만들기" 참고
 ```
 
-`NOTION_TOKEN`/`SLACK_BOT_TOKEN`이 없으면 해당 소스 없이 일반 대화만 가능하고, `CHATBOT_PASSWORD`
-또는 `ANTHROPIC_API_KEY`가 없으면 페이지 전체가 "설정 필요" 안내만 표시합니다.
+`NOTION_TOKEN`/`SLACK_BOT_TOKEN`이 없으면 해당 소스 없이 일반 대화만 가능하고, `ANTHROPIC_API_KEY`가
+없으면 페이지 전체가 "설정 필요" 안내만 표시합니다.
 
 로컬에서 테스트하려면 `.streamlit/secrets.toml.example`을 `.streamlit/secrets.toml`로 복사해
 값을 채우세요(이 파일은 `.gitignore`에 포함되어 있어 git에 올라가지 않습니다).

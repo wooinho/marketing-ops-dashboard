@@ -2,10 +2,9 @@
 """
 AI 챗봇 (파일럿) — 노션·슬랙 연동 업무 도우미.
 
-대시보드는 Public이지만, 이 페이지는 내부 커뮤니케이션(노션/슬랙, 추후 드라이브·메일)에
-접근하므로 별도 비밀번호로 잠근다. 시크릿(ANTHROPIC_API_KEY, NOTION_TOKEN,
-SLACK_BOT_TOKEN, CHATBOT_PASSWORD)이 설정되지 않으면 기능이 비활성화된 안내만 표시하고,
-절대 앱 전체를 죽이지 않는다.
+⚠️ 비밀번호 보호 없이 Public 대시보드에 그대로 노출된다(사용자 명시적 요청으로 제거,
+2026-09-21). 시크릿(ANTHROPIC_API_KEY, NOTION_TOKEN, SLACK_BOT_TOKEN)이 설정되지
+않으면 기능이 비활성화된 안내만 표시하고, 절대 앱 전체를 죽이지 않는다.
 """
 from __future__ import annotations
 
@@ -28,7 +27,6 @@ def _get_secret(key: str) -> str | None:
         return None
 
 
-CHATBOT_PASSWORD = _get_secret("CHATBOT_PASSWORD")
 ANTHROPIC_API_KEY = _get_secret("ANTHROPIC_API_KEY")
 NOTION_TOKEN = _get_secret("NOTION_TOKEN")
 SLACK_BOT_TOKEN = _get_secret("SLACK_BOT_TOKEN")
@@ -45,33 +43,15 @@ st.info(
     f"미연동: {', '.join(NOT_YET)} (순차 연동 예정)"
 )
 
-if not CHATBOT_PASSWORD:
+if not ANTHROPIC_API_KEY:
     st.warning(
         "⚠️ 아직 챗봇이 설정되지 않았습니다. Streamlit Cloud → Manage app → Settings → Secrets 에서 "
-        "`CHATBOT_PASSWORD`, `ANTHROPIC_API_KEY`, (선택) `NOTION_TOKEN` 을 설정해주세요. "
+        "`ANTHROPIC_API_KEY`, (선택) `NOTION_TOKEN`, `SLACK_BOT_TOKEN` 을 설정해주세요. "
         "설정 방법은 README를 참고하세요."
     )
     st.stop()
 
-if not ANTHROPIC_API_KEY:
-    st.warning("⚠️ `ANTHROPIC_API_KEY` 시크릿이 없어 챗봇을 사용할 수 없습니다. 관리자에게 문의해주세요.")
-    st.stop()
-
-# ── 비밀번호 게이트 ──────────────────────────────────────────────
-if "chatbot_authed" not in st.session_state:
-    st.session_state.chatbot_authed = False
-
-if not st.session_state.chatbot_authed:
-    with st.form("chatbot_login"):
-        pw = st.text_input("접근 비밀번호", type="password")
-        submitted = st.form_submit_button("입장")
-    if submitted:
-        if pw == CHATBOT_PASSWORD:
-            st.session_state.chatbot_authed = True
-            st.rerun()
-        else:
-            st.error("비밀번호가 올바르지 않습니다.")
-    st.stop()
+st.warning("⚠️ 이 페이지는 비밀번호 보호 없이 누구나 접근할 수 있습니다(사용자 요청으로 제거됨).")
 
 # ── 챗봇 UI ──────────────────────────────────────────────────────
 if "chat_messages" not in st.session_state:
