@@ -4,9 +4,13 @@ Plotly 차트 빌더. 와일리 브랜드 톤(네이비/그레이) 사용, 과�
 """
 from __future__ import annotations
 
+import math
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
+from . import metrics
 
 NAVY = "#1F3A5F"
 ACCENT = "#3E8ED0"
@@ -43,10 +47,40 @@ def target_vs_actual_trend(df: pd.DataFrame, month_col: str, target_col: str, ac
     return fig
 
 
+def _kr_axis_ticks(max_value: float, n: int = 5) -> tuple[list[float], list[str], str]:
+    """0~max_value 구간을 억/만원 단위의 "보기 좋은" 간격으로 나눠
+    (tickvals, ticktext, 단위) 반환. 영어 SI 표기(B/M/G) 대신 사용."""
+    if max_value is None or max_value <= 0:
+        return [0], ["0"], "원"
+    unit, unit_label = (1e8, "억원") if max_value >= 1e8 else (1e4, "만원") if max_value >= 1e4 else (1, "원")
+
+    raw_step = max_value / n
+    magnitude = 10 ** math.floor(math.log10(raw_step)) if raw_step > 0 else 1
+    nice_multiples = [1, 2, 2.5, 5, 10]
+    step = min(nice_multiples, key=lambda m: abs(m * magnitude - raw_step)) * magnitude
+
+    tickvals, v = [], 0.0
+    while v <= max_value * 1.05:
+        tickvals.append(v)
+        v += step
+
+    ticktext = []
+    for t in tickvals:
+        scaled = t / unit
+        ticktext.append(f"{scaled:,.0f}" if scaled == int(scaled) else f"{scaled:,.1f}")
+    return tickvals, ticktext, unit_label
+
+
 def group_comparison_bar(df: pd.DataFrame, group_col: str, value_col: str, title: str,
-                          y_title: str = "금액(₩)", x_title: str = "그룹") -> go.Figure:
-    fig = px.bar(df, x=group_col, y=value_col, color=group_col, color_discrete_map=GROUP_COLORS, text_auto=".2s")
-    fig.update_layout(**BASE_LAYOUT, title=title, xaxis_title=x_title, yaxis_title=y_title, showlegend=False)
+                          y_title: str = "금액", x_title: str = "그룹") -> go.Figure:
+    d = df.copy()
+    d["_label"] = d[value_col].apply(metrics.format_currency_kr_short)
+    fig = px.bar(d, x=group_col, y=value_col, color=group_col, color_discrete_map=GROUP_COLORS, text="_label")
+    fig.update_layout(**BASE_LAYOUT, title=title, xaxis_title=x_title, showlegend=False)
+
+    tickvals, ticktext, unit_label = _kr_axis_ticks(d[value_col].max())
+    fig.update_yaxes(title_text=f"{y_title}({unit_label})", tickmode="array",
+                      tickvals=tickvals, ticktext=ticktext)
     return fig
 
 

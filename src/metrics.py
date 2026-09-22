@@ -56,3 +56,20 @@ def format_mm(value) -> str:
     if value is None or (isinstance(value, float) and (np.isnan(value) or np.isinf(value))):
         return "N/A"
     return f"{value:,.1f}"
+
+
+def format_currency_kr_short(value) -> str:
+    """차트 라벨용 축약 원화 표시. 억/만 단위로 변환(예: 13억원, 39.1억원, 1,300만원)."""
+    if value is None or (isinstance(value, float) and (np.isnan(value) or np.isinf(value))):
+        return "N/A"
+    v = float(value)
+    sign = "-" if v < 0 else ""
+    v = abs(v)
+    if v >= 1e8:
+        eok = v / 1e8
+        text = f"{eok:.1f}".rstrip("0").rstrip(".")
+        return f"{sign}{text}억원"
+    if v >= 1e4:
+        man = v / 1e4
+        return f"{sign}{man:,.0f}만원"
+    return f"{sign}{v:,.0f}원"
