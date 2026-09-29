@@ -58,14 +58,14 @@ st.markdown(
 st.divider()
 st.subheader("2그룹 (마케팅2그룹/컨텐츠캠페인팀)")
 st.caption(
-    "원본 시트에 월 라벨이 명확하지 않아 스냅샷 순서(1=최신 ~ 5=과거)로 표시합니다. "
-    "스냅샷 1에는 Ayrow/PT/박세영A가 포함되어 있어 가장 최근 구성으로 추정됩니다."
+    "2026-09-29 갱신: 원본 시트가 월별로 명확히 라벨링되어(4\\~9월) 스냅샷 순서 대신 실제 조회월로 표시합니다. "
+    "원본에 3월 시트가 없어 3월 데이터는 제공되지 않습니다."
 )
-snaps = sorted(roles2["snapshot"].unique().tolist()) if not roles2.empty else []
-if snaps:
-    s2 = st.selectbox("조회 스냅샷 (2그룹)", options=snaps, index=0,
-                       format_func=lambda s: f"스냅샷 {s}" + (" (최신)" if s == 1 else ""), key="roles2_snapshot")
-    df2 = roles2[roles2["snapshot"] == s2]
+months2 = sorted(roles2["month"].unique().tolist()) if not roles2.empty else []
+if months2:
+    m2 = st.selectbox("조회월 (2그룹)", options=months2, index=len(months2) - 1,
+                       format_func=lambda m: f"{m}월", key="roles2_month")
+    df2 = roles2[roles2["month"] == m2]
     pivot2 = df2.pivot_table(index="staff", columns="client", values="role",
                               aggfunc=lambda x: ", ".join(sorted(set(x)))).fillna("")
     st.dataframe(style_matrix(pivot2), use_container_width=True)
@@ -75,8 +75,9 @@ else:
 st.markdown("**비고**")
 st.markdown(
     """
-    - 팀 리드가 김이레L → 박준현팀장으로 교체된 시점이 있으며(스냅샷 4·5는 김이레L, 스냅샷 1~3은 박준현팀장), 이는 조직 개편에 따른 변경입니다.
-    - Ayrow, PT(매일유업 엘로나), 박세영A 는 가장 최근 스냅샷(1)에만 등장합니다.
+    - 팀 리드가 김이레L → 박준현팀장으로 교체되었습니다(4\\~5월은 김이레L, 6월부터는 박준현팀장 - 조직 개편에 따른 변경).
+    - Ayrow는 8월부터, PT(매일유업 엘로나/의미 불명확)는 8월부터, 한화생명·Qeelin·젤라또피케는 9월부터, 박세영A·유영지M도
+      각각 8월·9월부터 새로 등장합니다(신규 편입/합류).
     - 역할 정의는 1그룹과 동일(PM / Senior AE / AE).
     """
 )

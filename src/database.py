@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS staff_roles_group1 (
 );
 
 CREATE TABLE IF NOT EXISTS staff_roles_group2 (
-    snapshot INTEGER NOT NULL,       -- 1(최신) ~ 5(과거) 스냅샷 순서, 월 라벨 불명확
+    month    INTEGER NOT NULL,       -- 4~9 (원본 시트에 월 라벨이 명확한 sheet만 존재, 3월 데이터 없음)
     staff    VARCHAR NOT NULL,
     client   VARCHAR NOT NULL,
     role     VARCHAR NOT NULL
