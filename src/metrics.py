@@ -40,6 +40,22 @@ def cumulative_sum(df: pd.DataFrame, month_col: str, value_col: str, up_to_month
     return float(sub[value_col].sum(skipna=True))
 
 
+def sum_over_range(df: pd.DataFrame, group_col: str, value_cols: list[str],
+                    start_month: int, end_month: int) -> pd.DataFrame:
+    """month 컬럼 기준 [start_month, end_month] 구간을 group_col별로 합산.
+    구간 내 전 월이 결측이면 0이 아닌 결측(N/A)으로 유지한다(sum(min_count=1))."""
+    sub = df[(df["month"] >= start_month) & (df["month"] <= end_month)]
+    if sub.empty:
+        return sub
+    return sub.groupby(group_col, as_index=False)[value_cols].agg(lambda s: s.sum(min_count=1))
+
+
+def join_unique_text(series) -> str:
+    """중복 제거한 문자열 값들을 ", "로 이어붙인다(구간 집계 시 basis/note 등 표시용)."""
+    vals = sorted({str(v) for v in series if pd.notna(v) and str(v) != ""})
+    return ", ".join(vals) if vals else "-"
+
+
 def format_currency(value) -> str:
     if value is None or (isinstance(value, float) and (np.isnan(value) or np.isinf(value))):
         return "N/A"

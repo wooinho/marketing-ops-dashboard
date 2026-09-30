@@ -33,13 +33,22 @@ def style_matrix(pivot: pd.DataFrame):
     return styler.applymap(_style)
 
 
+def period_label(s: int, e: int) -> str:
+    return f"{s}월" if s == e else f"{s}\\~{e}월"
+
+
 st.divider()
 st.subheader("1그룹 (브랜드캠페인팀)")
 months1 = sorted(roles1["month"].unique().tolist()) if not roles1.empty else []
 if months1:
-    m1 = st.selectbox("조회월 (1그룹)", options=months1, index=len(months1) - 1,
-                       format_func=lambda m: f"{m}월", key="roles1_month")
-    df1 = roles1[roles1["month"] == m1]
+    c1, c2 = st.columns(2)
+    s1 = c1.selectbox("시작월 (1그룹)", options=months1, index=0,
+                       format_func=lambda m: f"{m}월", key="roles1_start")
+    e1 = c2.selectbox("종료월 (1그룹)", options=months1, index=len(months1) - 1,
+                       format_func=lambda m: f"{m}월", key="roles1_end")
+    s1, e1 = sorted((s1, e1))
+    st.caption(f"조회 기간: {period_label(s1, e1)}. 구간에 걸쳐 같은 담당자·클라이언트라도 역할이 바뀌었다면 셀에 함께 표시됩니다(예: \"PM, AE\").")
+    df1 = roles1[(roles1["month"] >= s1) & (roles1["month"] <= e1)]
     pivot1 = df1.pivot_table(index="staff", columns="client", values="role",
                               aggfunc=lambda x: ", ".join(sorted(set(x)))).fillna("")
     st.dataframe(style_matrix(pivot1), use_container_width=True)
@@ -63,9 +72,14 @@ st.caption(
 )
 months2 = sorted(roles2["month"].unique().tolist()) if not roles2.empty else []
 if months2:
-    m2 = st.selectbox("조회월 (2그룹)", options=months2, index=len(months2) - 1,
-                       format_func=lambda m: f"{m}월", key="roles2_month")
-    df2 = roles2[roles2["month"] == m2]
+    c3, c4 = st.columns(2)
+    s2 = c3.selectbox("시작월 (2그룹)", options=months2, index=0,
+                       format_func=lambda m: f"{m}월", key="roles2_start")
+    e2 = c4.selectbox("종료월 (2그룹)", options=months2, index=len(months2) - 1,
+                       format_func=lambda m: f"{m}월", key="roles2_end")
+    s2, e2 = sorted((s2, e2))
+    st.caption(f"조회 기간: {period_label(s2, e2)}. 구간에 걸쳐 같은 담당자·클라이언트라도 역할이 바뀌었다면 셀에 함께 표시됩니다(예: \"PM, AE\").")
+    df2 = roles2[(roles2["month"] >= s2) & (roles2["month"] <= e2)]
     pivot2 = df2.pivot_table(index="staff", columns="client", values="role",
                               aggfunc=lambda x: ", ".join(sorted(set(x)))).fillna("")
     st.dataframe(style_matrix(pivot2), use_container_width=True)
